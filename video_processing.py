@@ -10,7 +10,7 @@ from menpo.visualize import progress_bar_str, print_progress
 from moviepy.audio.AudioClip import AudioArrayClip
 
 
-# creates tfrecords from '.mp4' files
+# creates tfrecords from '.wav' files
 root_dir = Path('path_of_RECOLA')
 
 portion_to_id = dict(
@@ -41,6 +41,23 @@ def get_samples(subject_id):
     valence = np.loadtxt(str(valence_label_path), delimiter=',')[:, 1][1:]
 
     return audio_frames, np.dstack([arousal, valence])[0].astype(np.float32)
+
+def get_audio_frames(path):
+
+    clip = VideoFileClip(path)
+
+    subsampled_audio = clip.audio.set_fps(16000)
+
+    audio_frames = []
+    for i in range(1, 2000):
+        time = 0.04 * i
+
+        audio = np.array(list(subsampled_audio.subclip(time - 0.04, time).iter_frames()))
+        audio = audio.mean(1)[:640]
+
+        audio_frames.append(audio.astype(np.float32))
+
+    return audio_frames
 
 def get_jpg_string(im):
     # Gets the serialized jpg from a menpo `Image`.
@@ -83,4 +100,3 @@ def main(directory):
 
 if __name__ == "__main__":
   main(Path('path_to_save_tfrecords'))
-

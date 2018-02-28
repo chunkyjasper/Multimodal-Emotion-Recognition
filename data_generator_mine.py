@@ -8,23 +8,22 @@ from pathlib import Path
 from moviepy.editor import VideoFileClip
 from menpo.visualize import progress_bar_str, print_progress
 from moviepy.audio.AudioClip import AudioArrayClip
+import config
 
 
-# creates tfrecords from '.mp4' files
-root_dir = Path('path_of_RECOLA')
 
 portion_to_id = dict(
-    train = [25, 15, 16 ,17 ,18 ,21 ,23 ,37 ,39 ,41 ,46 ,50 ,51 ,55 ,56, 60], # 25
-    valid = [14, 19, 24, 26, 28, 30, 34 ,40, 42, 43, 44, 45, 52, 64, 65],
-    test  = [54, 53, 13, 20, 22, 32, 38, 47, 48, 49, 57, 58, 59, 62, 63] # 54, 53
+    train = [45, 46, 48, 56, 58, 62, 64, 65], # 25
+    valid = [28, 30, 34, 37, 39, 41, 42, 43],
+    test  = [16, 17, 19, 21, 23, 25, 26] # 54, 53
 )
 
 # Retrieving
 def get_samples(subject_id):
-    arousal_label_path = root_dir / 'Ratings_affective_behaviour_CCC_centred/arousal/{}.csv'.format(subject_id)
-    valence_label_path = root_dir / 'Ratings_affective_behaviour_CCC_centred/valence/{}.csv'.format(subject_id)
+    arousal_label_path = config.DATA_DIR / 'RECOLA-Annotation-avg/arousal/{}.csv'.format(subject_id)
+    valence_label_path = config.DATA_DIR / 'RECOLA-Annotation-avg/valence/{}.csv'.format(subject_id)
 
-    clip = VideoFileClip(str(root_dir / "Video_recordings_MP4/{}.mp4".format(subject_id)))
+    clip = VideoFileClip(str(config.DATA_DIR / "RECOLA-Video-recordings/{}.mp4".format(subject_id)))
 
     subsampled_audio = clip.audio.set_fps(16000)
 
@@ -75,12 +74,11 @@ def main(directory):
     print(portion)
 
     for subj_id in print_progress(portion_to_id[portion]):
-
       writer = tf.python_io.TFRecordWriter(
-          (directory / 'tf_records' / portion / '{}.tfrecords'.format(subj_id)
+          (directory / portion / '{}.tfrecords'.format(subj_id)
           ).as_posix())
       serialize_sample(writer, subj_id)
 
 if __name__ == "__main__":
-  main(Path('path_to_save_tfrecords'))
+  main(Path(config.TFRECORDS_SAVE_PATH))
 

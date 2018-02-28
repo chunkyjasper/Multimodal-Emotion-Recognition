@@ -6,6 +6,7 @@ import tensorflow as tf
 from pathlib import Path
 from inception_processing import distort_color
 
+# provide data split (tfrecords to raw audio examples with labels)
 
 slim = tf.contrib.slim
 
@@ -23,6 +24,7 @@ def get_split(dataset_dir, is_training=True, split_name='train', batch_size=32,
     root_path = Path(dataset_dir) / split_name
     paths = [str(x) for x in root_path.glob('*.tfrecords')]
 
+    # string_input_producer creates a FIFO queue for holding the filenames until the reader needs them
     filename_queue = tf.train.string_input_producer(paths, shuffle=is_training)
 
     reader = tf.TFRecordReader()
@@ -77,6 +79,7 @@ def get_split(dataset_dir, is_training=True, split_name='train', batch_size=32,
     frames = tf.expand_dims(frames, 0)
 
     if is_training:
+        # Creates batches by randomly shuffling tensors (1000 is capacity, 50 is min_after_dequeue)
         frames, audio_samples, labels, subject_ids = tf.train.shuffle_batch(
             [frames, audio_samples, labels, subject_ids], batch_size, 1000, 50, num_threads=1)
     else:

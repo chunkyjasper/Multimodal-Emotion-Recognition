@@ -6,6 +6,7 @@ import tensorflow as tf
 import data_provider
 import losses
 import models
+import config
 
 from tensorflow.python.platform import tf_logging as logging
 
@@ -23,14 +24,14 @@ tf.app.flags.DEFINE_string('train_dir', 'ckpt/train',
 tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', '',
 			   'If specified, restore this pretrained model '
                            'before beginning any training.')
-tf.app.flags.DEFINE_integer('hidden_units', 256, 
+tf.app.flags.DEFINE_integer('hidden_units', 256,
 			    'The number of hidden units in the recurrent model')
-tf.app.flags.DEFINE_integer('seq_length', 2, 
+tf.app.flags.DEFINE_integer('seq_length', 2,
 			    'The number of consecutive examples to be used' 
 			    'in the recurrent model')
-tf.app.flags.DEFINE_string('model', 'both',
+tf.app.flags.DEFINE_string('model', 'audio',
                            'Which model is going to be used: audio, video, or both ')
-tf.app.flags.DEFINE_string('dataset_dir', 'path_to_tfrecords',
+tf.app.flags.DEFINE_string('dataset_dir', config.TFRECORDS_SAVE_PATH,
                            'The tfrecords directory.')
 
 def train(data_folder):
@@ -42,13 +43,12 @@ def train(data_folder):
                                                                  'train', FLAGS.batch_size,
 						                  seq_length=FLAGS.seq_length)
 
-
+        #https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/framework/python/ops/arg_scope.py
         # Define model graph.
         with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                 is_training=True):
           with slim.arg_scope(slim.nets.resnet_utils.resnet_arg_scope(is_training=True)):
-                  prediction = models.get_model(FLAGS.model)(frames, audio,
-                                                            hidden_units=FLAGS.hidden_units)
+                  prediction = models.recurrent_model(models.audio_model(audio_frames=audio), hidden_units=256)
 
         for i, name in enumerate(['arousal', 'valence']):
             pred_single = tf.reshape(prediction[:, :, i], (-1,))
